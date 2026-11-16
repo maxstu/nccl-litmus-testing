@@ -1,0 +1,33 @@
+name: Grouped exchange with one host thread per rank
+description: |
+  One thread per rank groups a send from its source buffer and a receive into a separate
+  destination on stream 0.
+  Rank 0 receives 3 and rank 1 receives 7, preserving both sources.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  thread {
+    group {
+      send<0,1>[0](0,0,float,buffer_size);
+      recv<0,1>[1](0,0,float,buffer_size);
+    }
+  }
+  thread {
+    group {
+      send<1,0>[0](0,0,float,buffer_size);
+      recv<1,0>[1](0,0,float,buffer_size);
+    }
+  }
+initial_values:
+- [7, 0]
+- [3, 0]
+acceptable_results:
+- - [7, 3]
+  - [3, 7]
+elementwise_results:
+- [7, 3]
+- [3, 7]

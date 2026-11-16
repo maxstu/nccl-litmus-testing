@@ -1,0 +1,23 @@
+name: documentation reduce operator mismatch
+description: |
+  Two rank-owning threads reduce inputs 2 and 3 to rank 0 on stream 0, with the root requesting
+  sum and the peer requesting product.
+  The incompatible reduction functions give undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+iterations: 10000
+communicators:
+- [0, 1]
+program: |
+  thread {
+      reduceRoot<0>[0,1](0,0,sum,float,buffer_size);
+  }
+  thread {
+      reducePeer<1,0>[0](0,0,product,float,buffer_size);
+  }
+initial_values:
+- [2, 0]
+- [3, 0]
+expected_undefined_behaviour: true

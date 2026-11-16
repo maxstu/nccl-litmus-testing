@@ -1,0 +1,21 @@
+name: Deadlocking transfer
+description: |
+  One host thread issues two opposing ungrouped sends before their receives on stream 0 at each
+  rank.
+  Each receive is blocked behind the send needed by its peer, forming a cyclic wait and giving
+  undefined behaviour.
+required_gpus: 2
+buffer_size: 1024
+buffers_per_gpu: 1
+streams_per_gpu: 1
+communicators:
+- [0, 1]
+program: |
+  send<0,1>[0](0,0,int,buffer_size);
+  send<1,0>[0](0,0,int,buffer_size);
+  recv<0,1>[0](0,0,int,buffer_size);
+  recv<1,0>[0](0,0,int,buffer_size);
+initial_values:
+- [0]
+- [1]
+expected_undefined_behaviour: true

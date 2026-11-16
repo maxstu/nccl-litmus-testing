@@ -1,0 +1,16 @@
+name: Host barrier with a missing participant
+description: |
+  Two host threads are created, but only thread 0 reaches a barrier requiring threads 0 and 1.
+  Thread 1 terminates without arriving, so the test expects a host-barrier execution stall.
+required_gpus: 1
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0]
+program: |
+  thread { barrier({0,1}); }
+  thread {}
+initial_values:
+- [0]
+expected_deadlock: true

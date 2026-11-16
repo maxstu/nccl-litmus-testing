@@ -1,0 +1,22 @@
+name: Simple Transfer
+description: |
+  One host thread groups a send from rank 0 with its matching receive at rank 1 on stream 0.
+  The copy changes rank 1 from 1 to 0 and leaves both buffers at 0.
+iterations: 1
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+communicators:
+- [0, 1]
+program: |
+  group {
+      send<0,1>[0](0,0,float,buffer_size);
+      recv<1,0>[0](0,0,float,buffer_size);
+  }
+initial_values:
+- [0]
+- [1]
+acceptable_results:
+- - - [0]
+  - - [0]

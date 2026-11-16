@@ -1,0 +1,32 @@
+name: 'Semantics: reducescatter values'
+description: |
+  Each rank contributes a uniform two-element source array, containing 7 or 3, to a sum
+  reduce-scatter.
+  Both destination arrays become [10,0], preserving the source arrays and unwritten suffix.
+  Uniform reduced segments do not distinguish which rank receives which slice.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 2
+communicators:
+- [0, 1]
+program: |
+  thread {
+      reduceScatter<0>[0,1](0,0,sum,float,1);
+  }
+  thread {
+      reduceScatter<1>[0,1](0,0,sum,float,1);
+  }
+initial_values:
+- [7, 0]
+- [3, 0]
+acceptable_results:
+- - - 7
+    - [10, 0]
+  - - 3
+    - [10, 0]
+elementwise_results:
+- - [7, 7]
+  - [10, 0]
+- - [3, 3]
+  - [10, 0]

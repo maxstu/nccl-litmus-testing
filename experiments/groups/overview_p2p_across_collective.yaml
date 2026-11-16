@@ -1,0 +1,36 @@
+name: 'Operational Figure 2: Grouped P2P exchange across an independent-buffer broadcast.'
+description: |
+  Each rank groups a P2P send, an independent-buffer broadcast and a receive on stream 0.
+  The receive buffers obtain 2 and 1 at ranks 0 and 1 respectively, while both broadcast buffers
+  become 3 and sources remain unchanged.
+required_gpus: 2
+buffers_per_gpu: 3
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+iterations: 10000
+program: |
+  thread {
+      group {
+          send<0,1>[0](0,0,float,buffer_size);
+          broadcastRoot<0>[2,2](0,0,float,buffer_size);
+          recv<0,1>[1](0,0,float,buffer_size);
+      }
+  }
+  thread {
+      group {
+          send<1,0>[0](0,0,float,buffer_size);
+          broadcastPeer<1,0>[2](0,0,float,buffer_size);
+          recv<1,0>[1](0,0,float,buffer_size);
+      }
+  }
+initial_values:
+- [1, 0, 3]
+- [2, 0, 0]
+acceptable_results:
+- - [1, 2, 3]
+  - [2, 1, 3]
+elementwise_results:
+- [1, 2, 3]
+- [2, 1, 3]

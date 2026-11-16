@@ -1,0 +1,31 @@
+name: Host barrier hands completed receive to another thread
+description: |
+  One thread receives into rank 0 buffer 0 and synchronises stream 0 before a host barrier
+  releases another thread to send it back on stream 1.
+  Rank 1 receives the reply into a distinct buffer, giving rank states [7,0] and [7,7].
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      recv<0,1>[0](0,0,float,1);
+      sync(0,0);
+      barrier({0,2});
+  }
+  thread {
+      send<1,0>[0](0,0,float,1);
+      recv<1,0>[1](0,1,float,1);
+  }
+  thread {
+      barrier({0,2});
+      send<0,1>[0](0,1,float,1);
+  }
+initial_values:
+- [0, 0]
+- [7, 0]
+acceptable_results:
+- - [7, 0]
+  - [7, 7]

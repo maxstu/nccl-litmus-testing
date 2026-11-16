@@ -1,0 +1,30 @@
+name: Further commands after mismatched collectives
+description: |
+  Two rank-owning threads issue scatter/gather at rank 0 and reduce/all-reduce at rank 1 on
+  communicator 0, then broadcast on communicator 1 using the same streams.
+  The test expects an execution stall from the incompatible collective sequence.
+iterations: 200
+buffer_size: 2048
+required_gpus: 2
+buffers_per_gpu: 4
+streams_per_gpu: 1
+expected_deadlock: true
+communicators:
+- [0, 1]
+- [0, 1]
+program: |
+  thread {
+      scatterRoot<0>[1,1](0,0,float,1024);
+      gatherRoot<0>[2,2](0,0,float,1024);
+
+      broadcastRoot<0>[0,0](1,0,float,1024);
+  }
+  thread {
+      reducePeer<1,0>[1](0,0,sum,float,1024);
+      allReduce<1>[2,2](0,0,sum,float,1024);
+
+      broadcastPeer<1,0>[0](1,0,float,1024);
+  }
+initial_values:
+- [0, 0, 0, 0]
+- [1, 0, 0, 0]

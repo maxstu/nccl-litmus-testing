@@ -1,0 +1,35 @@
+name: 'NCCL Tests candidate: Asymmetric broadcast: singleton rank 0 and paired ranks
+  1 and 2'
+description: |
+  One thread issues rank 0's broadcast alone, while another groups the rank-1 and rank-2 peer
+  calls on their stream 0.
+  All three rank buffers become the root value 42.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 128
+communicators:
+- [0, 1, 2]
+program: |
+  thread {
+      broadcastRoot<0>[0,0](0,0,float,buffer_size);
+  }
+  thread {
+      group {
+          broadcastPeer<1,0>[0](0,0,float,buffer_size);
+          broadcastPeer<2,0>[0](0,0,float,buffer_size);
+      }
+  }
+initial_values:
+- [42]
+- [0]
+- [0]
+acceptable_results:
+- - - [42]
+  - - [42]
+  - - [42]
+iterations: 100
+elementwise_results:
+- [42]
+- [42]
+- [42]

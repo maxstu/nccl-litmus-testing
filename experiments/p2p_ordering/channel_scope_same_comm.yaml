@@ -1,0 +1,29 @@
+name: 'Channel scope: same_comm'
+description: |
+  One thread per rank groups two same-peer transfers on streams 0 and 1 of a single communicator.
+  Both receives overwrite rank 1 buffer 1 without a completion dependency, giving undefined
+  behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 2
+buffer_size: 262144
+communicators:
+- [0, 1]
+program: |
+  thread {
+    group {
+      send<0,1>[0](0,0,float,buffer_size);
+      send<0,1>[1](0,1,float,buffer_size);
+    }
+  }
+  thread {
+    group {
+      recv<1,0>[1](0,0,float,buffer_size);
+      recv<1,0>[1](0,1,float,buffer_size);
+    }
+  }
+initial_values:
+- [7, 3]
+- [0, 0]
+iterations: 100
+expected_undefined_behaviour: true

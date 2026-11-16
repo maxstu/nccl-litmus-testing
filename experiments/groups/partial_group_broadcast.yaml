@@ -1,0 +1,29 @@
+name: Partially grouped broadcast
+description: |
+  One thread issues root 0's broadcast alone, while another groups the rank-1 and rank-2 peer
+  calls.
+  All three rank buffers become 42.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 128
+communicators:
+- [0, 1, 2]
+program: |
+  thread {
+      broadcastRoot<0>[0,0](0,0,int,buffer_size);
+  }
+  thread {
+      group {
+          broadcastPeer<1,0>[0](0,0,int,buffer_size);
+          broadcastPeer<2,0>[0](0,0,int,buffer_size);
+      }
+  }
+initial_values:
+- [42]
+- [0]
+- [0]
+acceptable_results:
+- - - [42]
+  - - [42]
+  - - [42]

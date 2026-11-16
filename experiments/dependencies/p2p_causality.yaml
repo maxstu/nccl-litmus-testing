@@ -1,0 +1,30 @@
+name: Same-stream forwarding without an explicit completion wait
+description: |
+  Three rank-owning threads transfer 1 from rank 0 through rank 1 to rank 2.
+  Rank 1 receives and then sends the same buffer through separate calls on stream 0, leaving all
+  ranks at 1 without a host completion wait.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1, 2]
+program: |
+  thread {
+      send<0,1>[0](0,0,float,buffer_size);
+  }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      send<1,2>[0](0,0,float,buffer_size);
+  }
+  thread {
+      recv<2,1>[0](0,0,float,buffer_size);
+  }
+initial_values:
+- [1]
+- [0]
+- [0]
+acceptable_results:
+- - [1]
+  - [1]
+  - [1]

@@ -1,0 +1,40 @@
+name: ReduceScatter distinct rank slices
+description: |
+  Each rank all-gathers 7 and 3 into [7,3], then synchronises stream 0 before a sum
+  reduce-scatter.
+  Rank-indexed slicing writes [14,-2] at rank 0 and [6,-2] at rank 1, preserving sources and
+  prepared arrays.
+required_gpus: 2
+buffers_per_gpu: 3
+streams_per_gpu: 1
+buffer_size: 2
+communicators:
+- [0, 1]
+program: |
+  thread {
+      allGather<0>[0,1](0,0,float,1);
+      sync(0,0);
+      reduceScatter<0>[1,2](0,0,sum,float,1);
+  }
+  thread {
+      allGather<1>[0,1](0,0,float,1);
+      sync(1,0);
+      reduceScatter<1>[1,2](0,0,sum,float,1);
+  }
+initial_values:
+- [7, -1, -2]
+- [3, -1, -2]
+acceptable_results:
+- - - 7
+    - [7, 3]
+    - [14, -2]
+  - - 3
+    - [7, 3]
+    - [6, -2]
+elementwise_results:
+- - [7, 7]
+  - [7, 3]
+  - [14, -2]
+- - [3, 3]
+  - [7, 3]
+  - [6, -2]

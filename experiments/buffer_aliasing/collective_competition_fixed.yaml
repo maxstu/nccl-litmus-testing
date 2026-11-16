@@ -1,0 +1,31 @@
+name: Collective Competition (Fixed)
+iterations: 100
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 2
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          allReduce<0>[0,0](0,0,sum,float,buffer_size);
+          broadcastRoot<0>[1,1](0,1,float,buffer_size);
+      }
+  }
+  thread {
+      group {
+          allReduce<1>[0,0](0,0,sum,float,buffer_size);
+          broadcastPeer<1,0>[1](0,1,float,buffer_size);
+      }
+  }
+initial_values:
+- [1.0, 1.0]
+- [1.0, 0.0]
+acceptable_results:
+- - [2.0, 1.0]
+  - [2.0, 1.0]
+description: |
+  One thread per rank groups a sum reduction on stream 0 and a broadcast on stream 1, using
+  disjoint buffers.
+  Both ranks finish with buffers [2,1].

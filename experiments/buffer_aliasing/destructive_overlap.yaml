@@ -1,0 +1,26 @@
+name: Destructive P2P Overlap
+description: |
+  Rank 0 groups two receives into buffer 0 on streams 0 and 1, while another thread sends values 1
+  and 2 from distinct rank-1 buffers.
+  The destination writes lack a completion dependency and have undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 4
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          recv<0,1>[0](0,0,float,1);
+          recv<0,1>[0](0,1,float,1);
+      }
+  }
+  thread {
+      send<1,0>[0](0,0,float,1);
+      send<1,0>[1](0,1,float,1);
+  }
+initial_values:
+- [0, 0]
+- [1, 2]
+expected_undefined_behaviour: true

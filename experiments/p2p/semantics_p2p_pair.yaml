@@ -1,0 +1,24 @@
+name: 'Semantics: matched P2P pair'
+description: |
+  Two rank-owning threads issue a complementary scalar send and receive on stream 0 of
+  communicator [0,1].
+  The transfer copies 7 from rank 0 to rank 1, leaving both at 7.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      send<0,1>[0](0,0,int,buffer_size);
+  }
+  thread {
+      recv<1,0>[0](0,0,int,buffer_size);
+  }
+initial_values:
+- [7]
+- [0]
+acceptable_results:
+- - [7]
+  - [7]

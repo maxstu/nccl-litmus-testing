@@ -1,0 +1,24 @@
+name: broadcast root mismatch 0 1
+description: |
+  Two rank-owning threads issue a four-element broadcast on stream 0, with each naming itself as
+  root.
+  Each rank supplies a separate source and output buffer.
+  The inconsistent root declarations give undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 4
+iterations: 10000
+communicators:
+- [0, 1]
+program: |
+  thread {
+      broadcastRoot<0>[0,1](0,0,float,4);
+  }
+  thread {
+      broadcastRoot<1>[0,1](0,0,float,4);
+  }
+initial_values:
+- [7, -1]
+- [3, -1]
+expected_undefined_behaviour: true

@@ -1,0 +1,29 @@
+name: Two grouped broadcasts write the same peer buffer
+description: |
+  Each rank groups two broadcasts on stream 0, with rank 0 supplying 7 and 3 from separate
+  buffers.
+  Both broadcasts write rank 1 buffer 0 without a completion dependency, giving undefined
+  behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  thread {
+    group {
+      broadcastRoot<0>[0,0](0,0,float,buffer_size);
+      broadcastRoot<0>[1,1](0,0,float,buffer_size);
+    }
+  }
+  thread {
+    group {
+      broadcastPeer<1,0>[0](0,0,float,buffer_size);
+      broadcastPeer<1,0>[0](0,0,float,buffer_size);
+    }
+  }
+initial_values:
+- [7, 3]
+- [0, 0]
+expected_undefined_behaviour: true

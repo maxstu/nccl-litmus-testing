@@ -1,0 +1,36 @@
+name: Subset Broadcast
+description: |
+  One host thread issues successive broadcast groups over [0,1,2], [0,1] and [1,2] on stream 0,
+  reusing buffer 0.
+  The broadcasts propagate 1 to all ranks while buffer 1 remains 0.
+iterations: 1
+buffer_size: 1024
+required_gpus: 3
+buffers_per_gpu: 2
+streams_per_gpu: 2
+communicators:
+- [0, 1, 2]
+- [0, 1]
+- [1, 2]
+program: |
+  group {
+      broadcastRoot<0>[0,0](0,0,float,buffer_size);
+      broadcastPeer<1,0>[0](0,0,float,buffer_size);
+      broadcastPeer<2,0>[0](0,0,float,buffer_size);
+  };
+  group {
+      broadcastRoot<0>[0,0](1,0,float,buffer_size);
+      broadcastPeer<1,0>[0](1,0,float,buffer_size);
+  };
+  group {
+      broadcastRoot<1>[0,0](2,0,float,buffer_size);
+      broadcastPeer<2,1>[0](2,0,float,buffer_size);
+  };
+initial_values:
+- [1.0, 0]
+- [0.0, 0]
+- [0.0, 0]
+acceptable_results:
+- - [1, 0]
+  - [1, 0]
+  - [1, 0]

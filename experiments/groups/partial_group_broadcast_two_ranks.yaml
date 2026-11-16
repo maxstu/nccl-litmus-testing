@@ -1,0 +1,26 @@
+name: Partial Group Participation
+description: |
+  Rank 0 wraps its root call in a singleton group, while a separate thread issues rank 1's peer
+  call alone.
+  Both scalar buffers become 1.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          broadcastRoot<0>[0,0](0,0,float,1);
+      }
+  }
+  thread {
+      broadcastPeer<1,0>[0](0,0,float,1);
+  }
+initial_values:
+- [1]
+- [0]
+acceptable_results:
+- - - [1]
+  - - [1]

@@ -1,0 +1,32 @@
+name: 'Operational Figure 1: Ungrouped transfer followed by a broadcast rooted at
+  the receiver.'
+description: |
+  Two rank-owning threads transfer 7 from rank 0 to rank 1, then broadcast from rank 1 using a
+  separate output buffer.
+  Separate calls on stream 0 order the received value before the broadcast, leaving both ranks at
+  [7,7].
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+iterations: 10000
+program: |
+  thread {
+      send<0,1>[0](0,0,float,buffer_size);
+      broadcastPeer<0,1>[1](0,0,float,buffer_size);
+  }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      broadcastRoot<1>[0,1](0,0,float,buffer_size);
+  }
+initial_values:
+- [7, 0]
+- [0, 0]
+acceptable_results:
+- - [7, 7]
+  - [7, 7]
+elementwise_results:
+- [7, 7]
+- [7, 7]

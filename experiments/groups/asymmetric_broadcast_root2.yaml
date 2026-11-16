@@ -1,0 +1,31 @@
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+initial_values:
+- [0]
+- [0]
+- [42]
+acceptable_results:
+- - [42]
+  - [42]
+  - [42]
+program: |
+  thread { group {
+      broadcastPeer<0,2>[0](0,0,float,buffer_size);
+      broadcastPeer<1,2>[0](0,0,float,buffer_size);
+  } }
+  thread { broadcastRoot<2>[0,0](0,0,float,buffer_size); }
+name: 'NCCL Tests candidate: Asymmetric broadcast with rotated root and singleton
+  ownership'
+description: |
+  One thread groups the rank-0 and rank-1 peer calls, while another issues root 2's broadcast
+  alone.
+  All three rank buffers become 42.
+iterations: 100
+elementwise_results:
+- [42]
+- [42]
+- [42]

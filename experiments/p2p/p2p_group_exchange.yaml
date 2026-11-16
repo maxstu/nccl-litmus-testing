@@ -1,0 +1,26 @@
+name: Grouped exchange blocked by the draft rank-busy guard
+description: |
+  One host thread groups two opposite-direction transfers using separate source and destination
+  buffers at each rank.
+  The destinations receive 3 at rank 0 and 7 at rank 1, preserving sources.
+  A rank-global busy guard that prevents exposing the other grouped command obstructs this
+  intended completion.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  group {
+    send<0,1>[0](0,0,float,buffer_size);
+    recv<0,1>[1](0,0,float,buffer_size);
+    send<1,0>[0](0,0,float,buffer_size);
+    recv<1,0>[1](0,0,float,buffer_size);
+  }
+initial_values:
+- [7, 0]
+- [3, 0]
+acceptable_results:
+- - [7, 3]
+  - [3, 7]

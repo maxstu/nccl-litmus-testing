@@ -1,0 +1,32 @@
+name: 'NCCL Tests candidate: Same-peer grouped sends with singleton receives'
+description: |
+  Rank 0 groups scalar sends of 7 and 3 on stream 0, while rank 1 issues separate receives on
+  stream 0 into distinct buffers.
+  Same-peer pairing leaves both ranks at [7,3].
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          send<0,1>[0](0,0,float,1);
+          send<0,1>[1](0,0,float,1);
+      }
+  }
+  thread {
+      recv<1,0>[0](0,0,float,1);
+      recv<1,0>[1](0,0,float,1);
+  }
+initial_values:
+- [7, 3]
+- [0, 5]
+acceptable_results:
+- - [7, 3]
+  - [7, 3]
+iterations: 100
+elementwise_results:
+- [7, 3]
+- [7, 3]

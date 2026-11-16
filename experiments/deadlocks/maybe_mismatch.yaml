@@ -1,0 +1,29 @@
+name: Potential command order mismatch
+description: |
+  Four host threads independently issue a broadcast and a sum all-reduce for the two ranks on one
+  communicator and stream, using separate buffers.
+  Host scheduling can produce inconsistent collective order, so the program has possible undefined
+  behaviour even when another schedule completes.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 128
+communicators:
+- [0, 1]
+program: |
+  thread {
+      broadcastRoot<0>[0,0](0,0,int,buffer_size);
+  }
+  thread {
+      broadcastPeer<1,0>[0](0,0,int,buffer_size);
+  }
+  thread {
+      allReduce<0>[1,1](0,0,sum,int,buffer_size);
+  }
+  thread {
+      allReduce<1>[1,1](0,0,sum,int,buffer_size);
+  }
+initial_values:
+- [0, 1]
+- [2, 3]
+expected_undefined_behaviour: true

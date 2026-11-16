@@ -1,0 +1,23 @@
+name: Cross-stream forwarding without synchronisation
+description: |
+  Three rank-owning threads forward scalar 7 from rank 0 through rank 1 to rank 2.
+  Rank 1 receives into its buffer on stream 0 and sends it on stream 1 without a completion wait,
+  giving undefined behaviour.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+program: |
+  thread { send<0,1>[0](0,0,float,buffer_size); }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      send<1,2>[0](0,1,float,buffer_size);
+  }
+  thread { recv<2,1>[0](0,1,float,buffer_size); }
+initial_values:
+- [7]
+- [0]
+- [0]
+expected_undefined_behaviour: true

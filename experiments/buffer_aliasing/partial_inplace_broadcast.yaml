@@ -1,0 +1,22 @@
+name: Partial in-place broadcast
+description: |
+  One host group broadcasts rank 0 buffer 0 in place and receives into rank 1 buffer 1.
+  The destination changes from -1 to 0 while rank 1 buffer 0 remains 1 and rank 0 remains [0,0].
+iterations: 100
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+communicators:
+- [0, 1]
+program: |
+  group {
+      broadcastRoot<0>[0,0](0,0,float,buffer_size); // in-place for rank 0
+      broadcastPeer<1,0>[1](0,0,float,buffer_size); // out-of-place for rank 1
+  }
+initial_values:
+- [0, 0]
+- [1, -1]
+acceptable_results:
+- - [0, 0]
+  - [1, 0]

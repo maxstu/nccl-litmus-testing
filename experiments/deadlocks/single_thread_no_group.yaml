@@ -1,0 +1,18 @@
+name: Attempting a collective from a single thread with no group
+description: |
+  One host thread issues root 0's broadcast and then rank 1's peer call without a group.
+  The test expects an execution stall if the root call waits before the peer call can be issued.
+iterations: 1
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+communicators:
+- [0, 1]
+expected_deadlock: true
+program: |
+  broadcastRoot<0>[0,0](0,0,float,buffer_size);
+  broadcastPeer<1,0>[0](0,0,float,buffer_size);
+initial_values:
+- [0]
+- [1]

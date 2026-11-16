@@ -1,0 +1,27 @@
+name: Cross-stream forwarding with explicit synchronisation
+description: |
+  Three rank-owning threads forward scalar 7 from rank 0 through rank 1 to rank 2.
+  Rank 1 synchronises receiving stream 0 before sending the same buffer on stream 1, so completing
+  executions leave all ranks at 7.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+program: |
+  thread { send<0,1>[0](0,0,float,buffer_size); }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      sync(1,0);
+      send<1,2>[0](0,1,float,buffer_size);
+  }
+  thread { recv<2,1>[0](0,1,float,buffer_size); }
+initial_values:
+- [7]
+- [0]
+- [0]
+acceptable_results:
+- - [7]
+  - [7]
+  - [7]

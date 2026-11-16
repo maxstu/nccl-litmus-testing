@@ -1,0 +1,30 @@
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+initial_values:
+- [0]
+- [42]
+- [0]
+acceptable_results:
+- - [42]
+  - [42]
+  - [42]
+program: |
+  thread { group {
+      broadcastPeer<0,1>[0](0,0,float,buffer_size);
+      broadcastRoot<1>[0,0](0,0,float,buffer_size);
+  } }
+  thread { broadcastPeer<2,1>[0](0,0,float,buffer_size); }
+name: 'NCCL Tests candidate: Asymmetric broadcast with root on paired thread'
+description: |
+  One thread groups rank 0's peer call and rank 1's root call, while another issues rank 2's peer
+  call alone.
+  The broadcast copies 42 from root 1 to all ranks.
+iterations: 100
+elementwise_results:
+- [42]
+- [42]
+- [42]

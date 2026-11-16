@@ -1,0 +1,31 @@
+name: 'Semantics: allgather values'
+description: |
+  Separate threads all-gather one element per rank from sources 7 and 3 into distinct output
+  buffers on stream 0.
+  Both outputs are exactly [7,3] in communicator rank order, with the sources preserved.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 2
+communicators:
+- [0, 1]
+program: |
+  thread {
+      allGather<0>[0,1](0,0,float,1);
+  }
+  thread {
+      allGather<1>[0,1](0,0,float,1);
+  }
+initial_values:
+- [7, 0]
+- [3, 0]
+acceptable_results:
+- - - 7
+    - [7, 3]
+  - - 3
+    - [7, 3]
+elementwise_results:
+- - [7, 7]
+  - [7, 3]
+- - [3, 3]
+  - [7, 3]

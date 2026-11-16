@@ -1,0 +1,24 @@
+name: Grouped P2P with same source/dest ranks
+description: |
+  One host group sends values 1 and 2 from rank 0 to the same rank-1 buffer on stream 0.
+  The single-stream same-peer overwrite oracle requires final value 2 in rank 1 buffer 0 and
+  leaves all other buffers unchecked.
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+communicators:
+- [0, 1]
+program: |
+  group {
+      send<0,1>[0](0,0,float,buffer_size);
+      recv<1,0>[0](0,0,float,buffer_size);
+      send<0,1>[1](0,0,float,buffer_size);
+      recv<1,0>[0](0,0,float,buffer_size);
+  }
+initial_values:
+- [1, 2]
+- [0, 0]
+acceptable_results:
+- - '*'
+  - [2, '*']

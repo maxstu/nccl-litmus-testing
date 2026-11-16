@@ -1,0 +1,29 @@
+name: Ready receive versus independent transfer commit
+description: |
+  Rank 1 receives 7 from rank 0, synchronises stream 0, then sends 11 from a separate buffer to
+  rank 2 on that stream.
+  Both transfers are expected to complete with their input values.
+  A global empty-ready commit guard can instead block the first transfer while rank 2's unmatched
+  receive is ready, obstructing the intended synchronisation and send.
+required_gpus: 3
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1, 2]
+program: |
+  thread { send<0,1>[0](0,0,float,buffer_size); }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      sync(1,0);
+      send<1,2>[1](0,0,float,buffer_size);
+  }
+  thread { recv<2,1>[1](0,0,float,buffer_size); }
+initial_values:
+- [7, 0]
+- [0, 11]
+- [0, 0]
+acceptable_results:
+- - [7, 0]
+  - [7, 11]
+  - [0, 11]

@@ -1,0 +1,19 @@
+name: Grouped self-transfer
+description: |
+  One rank groups a self-send from buffer 0 and a self-receive into distinct buffer 1 on stream 0.
+  The transfer copies 7 into buffer 1, giving [7,7].
+required_gpus: 1
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0]
+program: |
+  group {
+    send<0,0>[0](0,0,float,buffer_size);
+    recv<0,0>[1](0,0,float,buffer_size);
+  }
+initial_values:
+- [7, 0]
+acceptable_results:
+- - [7, 7]

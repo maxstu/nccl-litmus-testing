@@ -1,0 +1,24 @@
+name: Interleaved Clique Deadlock (Expected Deadlock)
+expected_deadlock: true
+iterations: 1
+buffer_size: 1024
+required_gpus: 3
+buffers_per_gpu: 2
+streams_per_gpu: 2
+communicators:
+- [0, 1]
+- [1, 2]
+program: |
+  allReduce<0>[0,0](0,0,sum,float,buffer_size);
+  allReduce<1>[0,0](0,0,sum,float,buffer_size);
+  allReduce<1>[0,0](1,0,sum,float,buffer_size);
+  allReduce<2>[0,0](1,0,sum,float,buffer_size);
+initial_values:
+- [1.0, 0]
+- [1.0, 0]
+- [1.0, 0]
+description: |
+  One host thread issues ungrouped in-place all-reduces for clique [0,1] and then clique [1,2] on
+  stream 0.
+  A call can wait before the thread reaches its matching participant, and the test expects an
+  execution stall.

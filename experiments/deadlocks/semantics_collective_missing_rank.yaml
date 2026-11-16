@@ -1,0 +1,20 @@
+name: 'Semantics: collective missing participant'
+description: |
+  Only rank 0 issues an in-place scalar all-reduce on communicator [0,1], while rank 1 contributes
+  no call.
+  The missing participant prevents construction of the collective, and the test expects an
+  execution stall.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      allReduce<0>[0,0](0,0,sum,int,buffer_size);
+  }
+initial_values:
+- [7]
+- [0]
+expected_deadlock: true

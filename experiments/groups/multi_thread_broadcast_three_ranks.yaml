@@ -1,0 +1,28 @@
+name: Multi-threaded broadcast
+description: |
+  Three rank-owning threads issue a broadcast using local streams 0, 1 and 2 respectively.
+  All buffers become root 0's initial value 0 despite the differing stream indices.
+buffer_size: 1024
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 3
+communicators:
+- [0, 1, 2]
+program: |
+  thread {
+      broadcastRoot<0>[0,0](0,0,float,buffer_size)
+  }
+  thread {
+      broadcastPeer<1,0>[0](0,1,float,buffer_size)
+  }
+  thread {
+      broadcastPeer<2,0>[0](0,2,float,buffer_size)
+  }
+initial_values:
+- [0]
+- [1]
+- [2]
+acceptable_results:
+- - - [0]
+  - - [0]
+  - - [0]

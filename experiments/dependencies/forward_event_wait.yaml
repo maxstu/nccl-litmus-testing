@@ -1,0 +1,33 @@
+name: 'NCCL Tests candidate: Cross-stream forwarding with a CUDA event dependency'
+description: |
+  Three rank-owning threads forward scalar 7 from rank 0 through rank 1 to rank 2.
+  Rank 1 records an event after receiving on stream 0 and makes stream 1 wait on it before
+  sending, leaving all buffers at 7.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+program: |
+  thread { send<0,1>[0](0,0,float,buffer_size); }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      event(1,0,1);
+      stream_wait(1,1,1);
+      send<1,2>[0](0,1,float,buffer_size);
+  }
+  thread { recv<2,1>[0](0,1,float,buffer_size); }
+initial_values:
+- [7]
+- [0]
+- [0]
+acceptable_results:
+- - [7]
+  - [7]
+  - [7]
+iterations: 100
+elementwise_results:
+- [7]
+- [7]
+- [7]

@@ -1,0 +1,24 @@
+name: reduce count mismatch 1 4
+description: |
+  Two rank-owning threads issue a sum reduction to root 0 on stream 0, using counts 1 and 4 at
+  ranks 0 and 1.
+  Each allocation holds four elements, so only the count agreement is violated, giving undefined
+  behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 4
+iterations: 10000
+communicators:
+- [0, 1]
+program: |
+  thread {
+      reduceRoot<0>[0,1](0,0,sum,float,1);
+  }
+  thread {
+      reducePeer<1,0>[0](0,0,sum,float,4);
+  }
+initial_values:
+- [7, -1]
+- [3, -1]
+expected_undefined_behaviour: true

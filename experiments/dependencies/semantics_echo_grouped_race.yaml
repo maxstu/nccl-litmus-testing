@@ -1,0 +1,29 @@
+name: 'Semantics: grouped echo race'
+description: |
+  One thread per rank groups the two calls of a scalar echo on stream 0, reusing each rank's
+  buffer for receiving and sending.
+  Both transfers can be pending together with conflicting read/write accesses, giving undefined
+  behaviour.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          send<0,1>[0](0,0,int,buffer_size);
+          recv<0,1>[0](0,0,int,buffer_size);
+      }
+  }
+  thread {
+      group {
+          recv<1,0>[0](0,0,int,buffer_size);
+          send<1,0>[0](0,0,int,buffer_size);
+      }
+  }
+initial_values:
+- [7]
+- [0]
+expected_undefined_behaviour: true

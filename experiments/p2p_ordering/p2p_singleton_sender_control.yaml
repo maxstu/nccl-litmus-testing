@@ -1,0 +1,26 @@
+name: 'Counterexample control: singleton sender and receiver'
+description: |
+  One thread per rank issues two separate scalar sends or receives on stream 0, using distinct
+  buffers.
+  The receiver obtains [7,3] in source order, with sources unchanged.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      send<0,1>[0](0,0,float,1);
+      send<0,1>[1](0,0,float,1);
+  }
+  thread {
+      recv<1,0>[0](0,0,float,1);
+      recv<1,0>[1](0,0,float,1);
+  }
+initial_values:
+- [7, 3]
+- [0, 5]
+acceptable_results:
+- - [7, 3]
+  - [7, 3]

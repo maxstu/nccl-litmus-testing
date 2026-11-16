@@ -1,0 +1,23 @@
+name: allreduce datatype mismatch int float
+description: |
+  Two rank-owning threads issue a four-element sum all-reduce on stream 0, with int at rank 0 and
+  float at rank 1.
+  The datatype disagreement gives undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 4
+iterations: 10000
+communicators:
+- [0, 1]
+program: |
+  thread {
+      allReduce<0>[0,1](0,0,sum,int,4);
+  }
+  thread {
+      allReduce<1>[0,1](0,0,sum,float,4);
+  }
+initial_values:
+- [7, -1]
+- [3, -1]
+expected_undefined_behaviour: true

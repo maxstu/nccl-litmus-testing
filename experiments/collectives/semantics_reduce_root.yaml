@@ -1,0 +1,23 @@
+name: 'Semantics: reduce root'
+description: |
+  Separate rank-owning threads sum scalar sources 7 and 3 into rank 1 buffer 1 on stream 0.
+  The root receives 10 while both sources and rank 0 buffer 1 remain unchanged.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      reducePeer<0,1>[0](0,0,sum,float,1);
+  }
+  thread {
+      reduceRoot<1>[0,1](0,0,sum,float,1);
+  }
+initial_values:
+- [7, 0]
+- [3, 0]
+acceptable_results:
+- - [7, 0]
+  - [3, 10]

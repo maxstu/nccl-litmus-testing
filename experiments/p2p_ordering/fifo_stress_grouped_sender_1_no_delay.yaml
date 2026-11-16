@@ -1,0 +1,33 @@
+name: 'Cross-stream FIFO stress: grouped_sender, 1 floats, no_delay'
+description: |
+  Rank 0 groups scalar sends of 7 and 3 on streams 0 and 1, while rank 1 issues separate stream-0
+  receives into distinct buffers.
+  The weaker per-stream FIFO baseline permits destination states [7,3,0] or [3,7,0], preserving
+  sources and unused scratch.
+  Stronger cross-stream ordering remains unresolved pending NVIDIA clarification.
+required_gpus: 2
+buffers_per_gpu: 3
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+    group {
+      send<0,1>[0](0,0,float,buffer_size);
+      send<0,1>[1](0,1,float,buffer_size);
+    }
+  }
+  thread {
+    recv<1,0>[0](0,0,float,buffer_size);
+    recv<1,0>[1](0,0,float,buffer_size);
+  }
+initial_values:
+- [7, 3, 0]
+- [-1, -2, 0]
+acceptable_results:
+- - [7, 3, 0]
+  - [7, 3, 0]
+- - [7, 3, 0]
+  - [3, 7, 0]
+iterations: 1000

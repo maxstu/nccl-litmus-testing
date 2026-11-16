@@ -1,0 +1,29 @@
+name: Multi-Stream FIFO
+description: |
+  Two rank-owning threads issue two same-peer transfers as separate calls on streams 0 and 1,
+  using distinct buffers.
+  The oracle requires receiver values [1,2] with sources unchanged, testing source-order pairing
+  across these streams.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 4
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  thread {
+      send<0,1>[0](0,0,float,buffer_size);
+      send<0,1>[1](0,1,float,buffer_size);
+  }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      recv<1,0>[1](0,1,float,buffer_size);
+  }
+initial_values:
+- [1, 2]
+- [0, 0]
+acceptable_results:
+- - - [1]
+    - [2]
+  - - [1]
+    - [2]

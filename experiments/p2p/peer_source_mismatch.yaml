@@ -1,0 +1,19 @@
+name: P2P receive names the wrong source
+description: |
+  Rank 0 sends to rank 1, but rank 1 receives from rank 2 on the same communicator, with no rank-2
+  send.
+  The mismatched endpoints have no complementary pair and the test expects an execution stall.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+program: |
+  thread { send<0,1>[0](0,0,float,1); }
+  thread { recv<1,2>[0](0,0,float,1); }
+initial_values:
+- [7]
+- [0]
+- [3]
+expected_deadlock: true

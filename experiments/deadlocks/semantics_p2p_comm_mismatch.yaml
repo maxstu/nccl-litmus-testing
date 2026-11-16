@@ -1,0 +1,23 @@
+name: 'Semantics: P2P communicator mismatch'
+description: |
+  Two rank-owning threads issue a scalar send and receive on different communicators, both with
+  membership [0,1].
+  The communicator mismatch leaves no complementary pair, and the test expects an execution stall.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+- [0, 1]
+program: |
+  thread {
+      send<0,1>[0](0,0,int,buffer_size);
+  }
+  thread {
+      recv<1,0>[0](1,0,int,buffer_size);
+  }
+initial_values:
+- [7]
+- [0]
+expected_deadlock: true

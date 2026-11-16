@@ -1,0 +1,31 @@
+name: 'FIFO matching: grouped sender, three singleton receives'
+description: |
+  Rank 0 groups three scalar sends on stream 0, while rank 1 issues separate receives on stream 0
+  into distinct buffers.
+  Sends and receives targeting the same peer on one stream match in source order,
+  so the receiver obtains [7, 3, 11] with sources unchanged.
+required_gpus: 2
+buffers_per_gpu: 3
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          send<0,1>[0](0,0,float,1);
+          send<0,1>[1](0,0,float,1);
+          send<0,1>[2](0,0,float,1);
+      }
+  }
+  thread {
+      recv<1,0>[0](0,0,float,1);
+      recv<1,0>[1](0,0,float,1);
+      recv<1,0>[2](0,0,float,1);
+  }
+initial_values:
+- [7, 3, 11]
+- [0, 5, 13]
+acceptable_results:
+- - [7, 3, 11]
+  - [7, 3, 11]

@@ -1,0 +1,32 @@
+name: Alternative ready-order cross-stream pairing witness
+description: |
+  Rank 0 groups scalar sends of 7 and 3 on streams 0 and 1, while rank 1 issues separate stream-0
+  receives into distinct buffers.
+  The weaker ready-order model permits [7,3] or [3,7] at the receiver, with sources unchanged.
+  The manuscript's source-order channel model excludes reversal, and the stronger cross-stream
+  guarantee remains unresolved pending NVIDIA clarification.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+    group {
+      send<0,1>[0](0,0,float,1);
+      send<0,1>[1](0,1,float,1);
+    }
+  }
+  thread {
+    recv<1,0>[0](0,0,float,1);
+    recv<1,0>[1](0,0,float,1);
+  }
+initial_values:
+- [7, 3]
+- [0, 5]
+acceptable_results:
+- - [7, 3]
+  - [7, 3]
+- - [7, 3]
+  - [3, 7]

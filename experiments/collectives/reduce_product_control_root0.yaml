@@ -1,0 +1,27 @@
+name: reduce product control root0
+description: |
+  Two rank-owning threads issue a matching out-of-place product reduction over four elements on
+  stream 0, rooted at rank 0.
+  Only the root output becomes 21; sources retain 7 and 3 and the non-root output remains -1.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 4
+iterations: 10000
+communicators:
+- [0, 1]
+program: |
+  thread {
+      reduceRoot<0>[0,1](0,0,product,float,4);
+  }
+  thread {
+      reducePeer<1,0>[0](0,0,product,float,4);
+  }
+initial_values:
+- [7, -1]
+- [3, -1]
+acceptable_results:
+- - - [7]
+    - [21]
+  - - [3]
+    - [-1]

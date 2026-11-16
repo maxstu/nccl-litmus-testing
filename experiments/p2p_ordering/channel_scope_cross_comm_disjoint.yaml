@@ -1,0 +1,32 @@
+name: 'Channel scope: cross_comm_disjoint'
+description: |
+  One thread per rank groups two same-peer transfers on different streams and distinct
+  communicators with membership [0,1].
+  Separate receive buffers preserve the values 7 and 3 as [7,3], with sources unchanged.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 2
+buffer_size: 262144
+communicators:
+- &id001 [0, 1]
+- *id001
+program: |
+  thread {
+    group {
+      send<0,1>[0](0,0,float,buffer_size);
+      send<0,1>[1](1,1,float,buffer_size);
+    }
+  }
+  thread {
+    group {
+      recv<1,0>[0](0,0,float,buffer_size);
+      recv<1,0>[1](1,1,float,buffer_size);
+    }
+  }
+initial_values:
+- [7, 3]
+- [0, 0]
+iterations: 100
+acceptable_results:
+- - [7, 3]
+  - [7, 3]

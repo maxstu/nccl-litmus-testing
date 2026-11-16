@@ -1,0 +1,28 @@
+name: Sequential P2P transfers with an unready successor
+description: |
+  One thread per rank issues two matching transfers on stream 0 using separate buffers and no
+  groups or inter-transfer wait.
+  Both complete in order, leaving each rank's buffers at [7,11].
+  The test probes whether registration of the successor obstructs commitment of the preceding
+  transfer.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  thread {
+      send<0,1>[0](0,0,float,buffer_size);
+      send<0,1>[1](0,0,float,buffer_size);
+  }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      recv<1,0>[1](0,0,float,buffer_size);
+  }
+initial_values:
+- [7, 11]
+- [0, 0]
+acceptable_results:
+- - [7, 11]
+  - [7, 11]

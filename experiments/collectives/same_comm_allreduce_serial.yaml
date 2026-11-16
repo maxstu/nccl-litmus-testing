@@ -1,0 +1,26 @@
+name: 'Same-communicator AllReduce: serial host calls'
+description: |
+  One thread per rank issues two in-place all-reduces in sequence on one communicator and stream,
+  using distinct buffers initially containing 1.
+  Every buffer finishes at 2.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  thread {
+    allReduce<0>[0,0](0,0,sum,float,buffer_size);
+    allReduce<0>[1,1](0,0,sum,float,buffer_size);
+  }
+  thread {
+    allReduce<1>[0,0](0,0,sum,float,buffer_size);
+    allReduce<1>[1,1](0,0,sum,float,buffer_size);
+  }
+initial_values:
+- [1, 1]
+- [1, 1]
+acceptable_results:
+- - [2, 2]
+  - [2, 2]

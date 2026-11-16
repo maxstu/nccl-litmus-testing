@@ -1,0 +1,23 @@
+name: Grouped collective race
+description: |
+  One host thread groups two broadcasts from rank 0 on stream 0, sending buffer values 2 and 1
+  into the same rank-1 destination.
+  The group supplies no completion order between these writes, so the program has undefined
+  behaviour.
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+communicators:
+- [0, 1]
+program: |
+  group {
+      broadcastRoot<0>[1,1](0,0,float,buffer_size);
+      broadcastPeer<1,0>[0](0,0,float,buffer_size);
+      broadcastRoot<0>[0,0](0,0,float,buffer_size);
+      broadcastPeer<1,0>[0](0,0,float,buffer_size);
+  }
+initial_values:
+- [1, 2]
+- [0, 0]
+expected_undefined_behaviour: true

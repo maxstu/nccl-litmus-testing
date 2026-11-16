@@ -1,0 +1,24 @@
+name: Collective Ordering Deadlock
+description: |
+  Two rank-owning threads issue a sum all-reduce and a rank-0 broadcast in opposite orders on one
+  communicator and stream.
+  The collective-order mismatch gives undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      allReduce<0>[0,0](0,0,sum,float,1);
+      broadcastRoot<0>[0,0](0,0,float,1);
+  }
+  thread {
+      broadcastPeer<1,0>[0](0,0,float,1);
+      allReduce<1>[0,0](0,0,sum,float,1);
+  }
+initial_values:
+- [1]
+- [2]
+expected_undefined_behaviour: true

@@ -1,0 +1,20 @@
+name: 'Semantics: synchronisation of empty streams'
+description: |
+  Two rank-owning threads each synchronise their local streams 0 and 1 while those streams are
+  empty.
+  Synchronisation releases the issuing threads without changing rank values 7 and 0.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread { sync(0,0); sync(0,1); }
+  thread { sync(1,0); sync(1,1); }
+initial_values:
+- [7]
+- [0]
+acceptable_results:
+- - [7]
+  - [0]

@@ -1,0 +1,29 @@
+name: Host barrier alone before cross-stream reply
+description: |
+  One thread issues a receive into rank 0 buffer 0, then a host barrier releases another thread to
+  send that buffer back on stream 1.
+  The barrier does not wait for the stream-0 receive to complete, leaving a receive/write and
+  send/read race with undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 2
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      recv<0,1>[0](0,0,float,1);
+      barrier({0,2});
+  }
+  thread {
+      send<1,0>[0](0,0,float,1);
+      recv<1,0>[1](0,1,float,1);
+  }
+  thread {
+      barrier({0,2});
+      send<0,1>[0](0,1,float,1);
+  }
+initial_values:
+- [0, 0]
+- [7, 0]
+expected_undefined_behaviour: true

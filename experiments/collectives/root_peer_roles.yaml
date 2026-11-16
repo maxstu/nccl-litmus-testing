@@ -1,0 +1,52 @@
+name: Rooted collective root and peer roles
+description: |
+  Two rank-owning threads issue scatter, gather, sum reduction and broadcast on stream 0 over
+  communicator [1,0], with global rank 1 as root.
+  Separate buffers expose each stage: scatter writes 7, gather produces [7,7] at the root, and
+  reduction followed by broadcast writes 14 to the designated first elements.
+  Unwritten suffix elements remain unchanged.
+required_gpus: 2
+buffers_per_gpu: 5
+streams_per_gpu: 1
+buffer_size: 2
+communicators:
+- [1, 0]
+program: |
+  thread {
+      scatterPeer<0,1>[1](0,0,float,1);
+      gatherPeer<0,1>[1](0,0,float,1);
+      reducePeer<0,1>[1](0,0,sum,float,1);
+      broadcastPeer<0,1>[4](0,0,float,1);
+  }
+  thread {
+      scatterRoot<1>[0,1](0,0,float,1);
+      gatherRoot<1>[1,2](0,0,float,1);
+      reduceRoot<1>[1,3](0,0,sum,float,1);
+      broadcastRoot<1>[3,4](0,0,float,1);
+  }
+initial_values:
+- [3, 0, 0, 0, 0]
+- [7, 0, 0, 0, 0]
+acceptable_results:
+- - - 3
+    - [0, 7]
+    - 0
+    - 0
+    - [0, 14]
+  - - 7
+    - [0, 7]
+    - 7
+    - [0, 14]
+    - [0, 14]
+elementwise_results:
+- - [3, 3]
+  - [7, 0]
+  - [0, 0]
+  - [0, 0]
+  - [14, 0]
+- - [7, 7]
+  - [7, 0]
+  - [7, 7]
+  - [14, 0]
+  - [14, 0]
+iterations: 1

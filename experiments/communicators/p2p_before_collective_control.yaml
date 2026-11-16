@@ -1,0 +1,29 @@
+name: P2P before collective dependency control
+description: |
+  Rank 0 groups a separate-buffer send on communicator 1 before a sum reduction on communicator 0.
+  Rank 1 receives before reducing on its stream 0, giving sum outputs 10 and received value 11.
+  This tests completion when the grouped send can release the other rank's receive dependency.
+required_gpus: 2
+buffers_per_gpu: 3
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+- [0, 1]
+program: |
+  thread {
+    group {
+      send<0,1>[2](1,0,float,1);
+      allReduce<0>[0,1](0,0,sum,float,1);
+    }
+  }
+  thread {
+    recv<1,0>[2](1,0,float,1);
+    allReduce<1>[0,1](0,0,sum,float,1);
+  }
+initial_values:
+- [7, 0, 11]
+- [3, 0, 0]
+acceptable_results:
+- - [7, 10, 11]
+  - [3, 10, 11]

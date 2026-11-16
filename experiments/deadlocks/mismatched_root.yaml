@@ -1,0 +1,22 @@
+name: Mismatched Broadcast Root
+description: |
+  Two rank-owning threads issue an in-place scalar broadcast on one communicator and stream, with
+  each declaring itself root.
+  The inconsistent roots give undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      broadcastRoot<0>[0,0](0,0,float,1);
+  }
+  thread {
+      broadcastRoot<1>[0,0](0,0,float,1);
+  }
+initial_values:
+- [1]
+- [2]
+expected_undefined_behaviour: true

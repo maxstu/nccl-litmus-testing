@@ -1,0 +1,6 @@
+pyyaml
+tqdm
+pyzmq
+parsy
+jinja2
+protobuf==6.33.5

@@ -1,0 +1,25 @@
+name: Perform two P2Ps between two buffers on two ranks
+description: |
+  One host group sends rank 0 buffers containing 1 and 2 on stream 0, then receives into rank 1
+  buffers 1 and 0 in that order.
+  Source-order pairing gives rank 1 [2,1]; the sender is unchecked.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+iterations: 16384
+buffer_size: 65536
+communicators:
+- [0, 1]
+program: |
+  group {
+      send<0,1>[0](0,0,float,buffer_size);
+      send<0,1>[1](0,0,float,buffer_size);
+      recv<1,0>[1](0,0,float,buffer_size);
+      recv<1,0>[0](0,0,float,buffer_size);
+  }
+initial_values:
+- [1, 2]
+- [0, 0]
+acceptable_results:
+- - '*'
+  - [2, 1]

@@ -1,0 +1,25 @@
+name: Receive into two buffers
+description: |
+  One host thread groups two rank-0 receives and two rank-1 sends on stream 0, using distinct
+  destination buffers.
+  Source-order pairing copies 2 and 3 to rank 0, leaving both ranks at [2,3].
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+iterations: 16384
+buffer_size: 65536
+communicators:
+- [0, 1]
+program: |
+  group {
+      recv<0,1>[0](0,0,int,buffer_size);
+      recv<0,1>[1](0,0,int,buffer_size);
+      send<1,0>[0](0,0,int,buffer_size);
+      send<1,0>[1](0,0,int,buffer_size);
+  }
+initial_values:
+- [0, 1]
+- [2, 3]
+acceptable_results:
+- - [2, 3]
+  - [2, 3]

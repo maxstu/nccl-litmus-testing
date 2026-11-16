@@ -1,0 +1,28 @@
+name: Grouped sends share a read-only source
+description: |
+  Rank 0 groups sends from one read-only scalar buffer to ranks 1 and 2, whose matching receives
+  run in separate threads.
+  Both destinations and the shared source finish at 7.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+program: |
+  thread {
+    group {
+      send<0,1>[0](0,0,float,buffer_size);
+      send<0,2>[0](0,0,float,buffer_size);
+    }
+  }
+  thread { recv<1,0>[0](0,0,float,buffer_size); }
+  thread { recv<2,0>[0](0,0,float,buffer_size); }
+initial_values:
+- [7]
+- [0]
+- [-1]
+acceptable_results:
+- - [7]
+  - [7]
+  - [7]

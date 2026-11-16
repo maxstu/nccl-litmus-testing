@@ -1,0 +1,23 @@
+name: Chain Transfer
+description: |
+  One host group transfers rank 0's buffer through rank 1 to rank 2 on stream 0.
+  Rank 1 receives into and sends from the same buffer without a completion dependency, giving
+  undefined behaviour.
+required_gpus: 3
+buffer_size: 1024
+buffers_per_gpu: 1
+streams_per_gpu: 1
+communicators:
+- [0, 1, 2]
+program: |
+  group {
+      send<0,1>[0](0,0,int,buffer_size);
+      recv<1,0>[0](0,0,int,buffer_size);
+      send<1,2>[0](0,0,int,buffer_size);
+      recv<2,1>[0](0,0,int,buffer_size);
+  }
+initial_values:
+- [0]
+- [1]
+- [2]
+expected_undefined_behaviour: true

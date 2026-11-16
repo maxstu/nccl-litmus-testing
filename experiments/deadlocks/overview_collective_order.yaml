@@ -1,0 +1,33 @@
+name: 'Operational Figure 3: Oppositely ordered collectives with an interposed matching
+  P2P pair.'
+description: |
+  Each rank groups a broadcast, a P2P transfer and a sum all-reduce on stream 0, but the ranks
+  list the two collectives in opposite orders.
+  The matching P2P pair does not repair the collective-order mismatch, so the whole program has
+  undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 3
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+iterations: 10000
+program: |
+  thread {
+      group {
+          broadcastRoot<0>[1,1](0,0,float,buffer_size);
+          send<0,1>[0](0,0,float,buffer_size);
+          allReduce<0>[2,2](0,0,sum,float,buffer_size);
+      }
+  }
+  thread {
+      group {
+          allReduce<1>[2,2](0,0,sum,float,buffer_size);
+          recv<1,0>[0](0,0,float,buffer_size);
+          broadcastPeer<1,0>[1](0,0,float,buffer_size);
+      }
+  }
+initial_values:
+- [1, 2, 3]
+- [0, 0, 3]
+expected_undefined_behaviour: true

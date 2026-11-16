@@ -1,0 +1,20 @@
+name: Raw P2P
+description: |
+  Three rank-owning threads forward a buffer from rank 0 through rank 1 to rank 2.
+  Rank 1 receives into buffer 0 on stream 0 and sends that buffer on stream 1 without a completion
+  wait, giving undefined behaviour.
+iterations: 1
+buffer_size: 1024
+required_gpus: 3
+buffers_per_gpu: 2
+streams_per_gpu: 2
+communicators:
+- [0, 1, 2]
+program: "thread { send<0,1>[0](0,0,float,buffer_size); }\nthread { \n    recv<1,0>[0](0,0,float,\
+  \ buffer_size);\n    send<1,2>[0](0,1,float,buffer_size);\n}\nthread { recv<2,1>[0](0,0,float,\
+  \ buffer_size); }\n"
+initial_values:
+- [1.0, 0]
+- [0.0, 0]
+- [0.0, 0]
+expected_undefined_behaviour: true

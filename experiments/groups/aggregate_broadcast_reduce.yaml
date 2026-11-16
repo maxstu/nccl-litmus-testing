@@ -1,0 +1,30 @@
+required_gpus: 2
+buffers_per_gpu: 4
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1]
+initial_values:
+- [42, 7, -1, -2]
+- [5, 3, -3, -4]
+acceptable_results:
+- - [42, 7, 42, 10]
+  - [5, 3, 42, 10]
+program: |
+  thread { group {
+      broadcastRoot<0>[0,2](0,0,float,buffer_size);
+      allReduce<0>[1,3](0,0,sum,float,buffer_size);
+  } }
+  thread { group {
+      broadcastPeer<1,0>[2](0,0,float,buffer_size);
+      allReduce<1>[1,3](0,0,sum,float,buffer_size);
+  } }
+name: 'NCCL Tests candidate: Checked broadcast and allReduce in one group'
+description: |
+  Each rank groups a broadcast from rank 0 and a sum all-reduce on stream 0, using disjoint
+  sources and destinations.
+  The broadcast outputs contain 42 and the sum outputs contain 10, with sources unchanged.
+iterations: 100
+elementwise_results:
+- [42, 7, 42, 10]
+- [5, 3, 42, 10]

@@ -1,0 +1,39 @@
+name: 'NCCL Tests candidate: Checked P2P exchange interleaved with independent broadcast'
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 3
+streams_per_gpu: 1
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          send<0,1>[0](0,0,float,buffer_size);
+          broadcastRoot<0>[2,2](0,0,float,buffer_size);
+          recv<0,1>[1](0,0,float,buffer_size);
+      }
+  }
+  thread {
+      group {
+          send<1,0>[0](0,0,float,buffer_size);
+          broadcastPeer<1,0>[2](0,0,float,buffer_size);
+          recv<1,0>[1](0,0,float,buffer_size);
+      }
+  }
+initial_values:
+- [0, 2, 4]
+- [1, 3, 5]
+acceptable_results:
+- - - [0]
+    - [1]
+    - [4]
+  - - [1]
+    - [0]
+    - [4]
+description: |
+  Each rank groups a send, a rank-0 broadcast and a receive on stream 0 using separate buffers.
+  The P2P destinations receive the peer's source value, while both broadcast buffers become 4.
+iterations: 100
+elementwise_results:
+- [0, 1, 4]
+- [1, 0, 4]

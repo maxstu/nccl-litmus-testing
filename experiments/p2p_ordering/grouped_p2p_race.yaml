@@ -1,0 +1,39 @@
+name: Grouped same-peer sends with independent receive buffers
+description: |
+  Rank 0 groups sends of 1 and 2 to rank 2 on stream 0, while rank 1 separately sends 3.
+  Rank 2 receives into distinct buffers, giving [1,2,3] while preserving sources.
+required_gpus: 3
+buffers_per_gpu: 3
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+program: |
+  thread {
+      group {
+          send<0,2>[0](0,0,float,1);
+          send<0,2>[1](0,0,float,1);
+      }
+  }
+  thread {
+      send<1,2>[0](0,0,float,1);
+  }
+  thread {
+      recv<2,0>[0](0,0,float,1);
+      recv<2,0>[1](0,0,float,1);
+      recv<2,1>[2](0,0,float,1);
+  }
+initial_values:
+- [1, 2, 0]
+- [3, 0, 0]
+- [0, 0, 0]
+acceptable_results:
+- - - [1]
+    - [2]
+    - [0]
+  - - [3]
+    - [0]
+    - [0]
+  - - [1]
+    - [2]
+    - [3]

@@ -1,0 +1,23 @@
+name: Grouped dependent P2P echo without collective interposition
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 2
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  group {
+      send<1,0>[0](0,1,int,buffer_size);
+      recv<0,1>[0](0,0,int,buffer_size);
+      send<0,1>[0](0,0,int,buffer_size);
+      recv<1,0>[0](0,1,int,buffer_size);
+  }
+initial_values:
+- [0]
+- [1]
+expected_undefined_behaviour: true
+description: |
+  One host group exchanges values between ranks 0 and 1 using each rank's buffer as both send
+  source and receive destination.
+  Same-stream placement within the group supplies no completion dependency between opposing
+  transfers, giving undefined behaviour.

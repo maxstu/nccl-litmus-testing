@@ -1,0 +1,45 @@
+name: 'Cross-stream FIFO stress: ungrouped, 1024 floats, send_delay'
+description: |
+  Rank 0 issues eight disjoint 1024-element sends as separate calls alternating streams 1 and 0,
+  while rank 1 receives through separate stream-0 calls.
+  A delayed zero fill touches only sender scratch buffer 8.
+  The oracle tests the source-order result [7,3,11,19,23,31,43,59] with sources and scratch
+  unchanged as a falsification hypothesis rather than a general cross-stream guarantee.
+required_gpus: 2
+buffers_per_gpu: 9
+streams_per_gpu: 2
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  thread {
+    fill<0,1>[8](float,1,0,10000000);
+    send<0,1>[0](0,1,float,buffer_size);
+    send<0,1>[1](0,0,float,buffer_size);
+    send<0,1>[2](0,1,float,buffer_size);
+    send<0,1>[3](0,0,float,buffer_size);
+    send<0,1>[4](0,1,float,buffer_size);
+    send<0,1>[5](0,0,float,buffer_size);
+    send<0,1>[6](0,1,float,buffer_size);
+    send<0,1>[7](0,0,float,buffer_size);
+  }
+  thread {
+    recv<1,0>[0](0,0,float,buffer_size);
+    recv<1,0>[1](0,1,float,buffer_size);
+    recv<1,0>[2](0,0,float,buffer_size);
+    recv<1,0>[3](0,1,float,buffer_size);
+    recv<1,0>[4](0,0,float,buffer_size);
+    recv<1,0>[5](0,1,float,buffer_size);
+    recv<1,0>[6](0,0,float,buffer_size);
+    recv<1,0>[7](0,1,float,buffer_size);
+  }
+initial_values:
+- [7, 3, 11, 19, 23, 31, 43, 59, 0]
+- [-1, -2, -3, -4, -5, -6, -7, -8, 0]
+acceptable_results:
+- - [7, 3, 11, 19, 23, 31, 43, 59, 0]
+  - [7, 3, 11, 19, 23, 31, 43, 59, 0]
+elementwise_results:
+- [7, 3, 11, 19, 23, 31, 43, 59, 0]
+- [7, 3, 11, 19, 23, 31, 43, 59, 0]
+iterations: 1000

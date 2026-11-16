@@ -1,0 +1,23 @@
+name: 'Semantics: collective kind mismatch'
+description: |
+  Separate rank-owning threads issue an all-reduce at rank 0 and an all-gather at rank 1 on one
+  communicator and stream.
+  Both calls use count 1 and two-element allocations, isolating the collective-kind mismatch.
+  The test expects an execution stall.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 2
+communicators:
+- [0, 1]
+program: |
+  thread {
+      allReduce<0>[0,1](0,0,sum,float,1);
+  }
+  thread {
+      allGather<1>[0,1](0,0,float,1);
+  }
+initial_values:
+- [7, 0]
+- [3, 0]
+expected_deadlock: true

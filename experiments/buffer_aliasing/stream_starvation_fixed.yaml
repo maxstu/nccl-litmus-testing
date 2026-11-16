@@ -1,0 +1,34 @@
+name: Grouped repeated reductions and an independent reduction
+iterations: 100
+buffer_size: 1024
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 2
+communicators:
+- [0, 1]
+program: |
+  thread {
+      group {
+          allReduce<0>[0,0](0,0,sum,float,buffer_size);
+          allReduce<0>[0,0](0,0,sum,float,buffer_size);
+          allReduce<0>[0,0](0,0,sum,float,buffer_size);
+          allReduce<0>[1,1](0,1,sum,float,buffer_size);
+      }
+  }
+  thread {
+      group {
+          allReduce<1>[0,0](0,0,sum,float,buffer_size);
+          allReduce<1>[0,0](0,0,sum,float,buffer_size);
+          allReduce<1>[0,0](0,0,sum,float,buffer_size);
+          allReduce<1>[1,1](0,1,sum,float,buffer_size);
+      }
+  }
+initial_values:
+- [1.0, 1.0]
+- [1.0, 1.0]
+expected_undefined_behaviour: true
+description: |
+  Each rank groups three in-place reductions on buffer 0 and a separate reduction on buffer 1
+  using another stream.
+  The grouped buffer-0 operations have conflicting accesses without a completion order and give
+  undefined behaviour.

@@ -1,0 +1,25 @@
+name: Can a collective be used as a barrier between P2P operations in a group?
+description: |
+  One host group places an independent-buffer broadcast between opposing P2P transfers on stream
+  0.
+  The transfers reuse the same buffers, and the broadcast supplies no completion dependency
+  between their conflicting accesses, giving undefined behaviour.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1024
+communicators:
+- [0, 1]
+program: |
+  group {
+      send<1,0>[0](0,0,int,buffer_size);
+      recv<0,1>[0](0,0,int,buffer_size);
+      broadcastRoot<0>[1,1](0,0,int,buffer_size);
+      broadcastPeer<1,0>[1](0,0,int,buffer_size);
+      send<0,1>[0](0,0,int,buffer_size);
+      recv<1,0>[0](0,0,int,buffer_size);
+  }
+initial_values:
+- [0, 0]
+- [1, 0]
+expected_undefined_behaviour: true

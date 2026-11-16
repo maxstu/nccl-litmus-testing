@@ -1,0 +1,26 @@
+name: Distinct-peer routing with reversed receive order
+description: |
+  One host group sends 7 and 3 from ranks 1 and 2 to rank 0, whose receives name rank 2 before
+  rank 1 and use separate buffers.
+  Rank 0 receives [3,7], with senders preserved.
+required_gpus: 3
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 1
+communicators:
+- [0, 1, 2]
+program: |
+  group {
+    send<1,0>[0](0,0,float,1);
+    send<2,0>[0](0,0,float,1);
+    recv<0,2>[0](0,0,float,1);
+    recv<0,1>[1](0,0,float,1);
+  }
+initial_values:
+- [0, 0]
+- [7, 0]
+- [3, 0]
+acceptable_results:
+- - [3, 7]
+  - [7, 0]
+  - [3, 0]

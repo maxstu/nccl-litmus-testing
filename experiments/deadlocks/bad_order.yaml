@@ -1,0 +1,24 @@
+name: Ungrouped mismatched collective order
+description: |
+  Two rank-owning threads issue a broadcast and an all-reduce in opposite orders on the same
+  communicator and stream.
+  This ungrouped program expects an execution stall from the incompatible collective sequence.
+required_gpus: 2
+buffers_per_gpu: 2
+streams_per_gpu: 1
+buffer_size: 128
+communicators:
+- [0, 1]
+program: |
+  thread {
+      broadcastRoot<0>[0,0](0,0,int,buffer_size);
+      allReduce<0>[1,1](0,0,sum,int,buffer_size);
+  }
+  thread {
+      allReduce<1>[1,1](0,0,sum,int,buffer_size);
+      broadcastPeer<1,0>[0](0,0,int,buffer_size);
+  }
+initial_values:
+- [0, 0]
+- [1, 0]
+expected_deadlock: true

@@ -1,0 +1,23 @@
+name: Multi-thread broadcast
+description: |
+  Two separate rank-owning threads issue a broadcast on stream 0 without groups.
+  Both buffers become root 0's initial value 42.
+required_gpus: 2
+buffers_per_gpu: 1
+streams_per_gpu: 1
+buffer_size: 128
+communicators:
+- [0, 1]
+program: |
+  thread {
+      broadcastRoot<0>[0,0](0,0,int,buffer_size);
+  }
+  thread {
+      broadcastPeer<1,0>[0](0,0,int,buffer_size);
+  }
+initial_values:
+- [42]
+- [0]
+acceptable_results:
+- - - [42]
+  - - [42]

@@ -1,0 +1,33 @@
+name: 'NCCL Tests candidate: Cross-stream forwarding with a host stream wait'
+description: |
+  Three rank-owning threads forward a 1024-element buffer containing 1 from rank 0 through rank 1
+  to rank 2.
+  Rank 1 synchronises the receiving stream 0 before sending on stream 1, leaving every buffer at
+  1.
+required_gpus: 3
+buffers_per_gpu: 1
+streams_per_gpu: 2
+buffer_size: 1024
+communicators:
+- [0, 1, 2]
+program: |
+  thread { send<0,1>[0](0,0,float,buffer_size); }
+  thread {
+      recv<1,0>[0](0,0,float,buffer_size);
+      sync(1,0);
+      send<1,2>[0](0,1,float,buffer_size);
+  }
+  thread { recv<2,1>[0](0,1,float,buffer_size); }
+initial_values:
+- [1]
+- [0]
+- [0]
+acceptable_results:
+- - [1]
+  - [1]
+  - [1]
+iterations: 100
+elementwise_results:
+- [1]
+- [1]
+- [1]
